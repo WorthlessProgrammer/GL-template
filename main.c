@@ -16,7 +16,17 @@
 #define WIN_NAME "Shader - Fractal"
 
 const char* vertex_source = "./shaders/vertex.shader"; 
-const char* fragment_source = "./shaders/fragment.shader"; 
+const char* fragment_source = "./shaders/fragment.shader";
+
+#define PROGRAM_COUNT 1
+
+typedef struct {
+	GLFWwindow *window;
+	unsigned int vao;
+	unsigned int vbo;
+	unsigned int ibo;
+	unsigned int programs[PROGRAM_COUNT];
+} Context;
 
 size_t file_size(FILE *fs)
 {
@@ -88,92 +98,51 @@ static unsigned int compile_shader(unsigned int type, const char *source)
 	return id;
 }
 
-static unsigned int create_shader(const char *vertexShader, const char *fragmentShader)
+void init_program(Context *render, size_t program_slot)
 {
-	unsigned int program, 
-				 vs, 
-				 fs;
-
-	char *v = parse_code_to_cstr(vertexShader);
-	char *f = parse_code_to_cstr(fragmentShader);
-
-	program = glCreateProgram();
-	vs = compile_shader(GL_VERTEX_SHADER, v);
-	fs = compile_shader(GL_FRAGMENT_SHADER, f);
-
-	free(v);
-	free(f);
-
-	glAttachShader(program, vs);
-	glAttachShader(program, fs);
-	glLinkProgram(program);
-	glValidateProgram(program);
-	glDeleteShader(vs);
-	glDeleteShader(fs);
-
-	return program;
+	if (program_slot >= PROGRAM_COUNT)
+		return;
+	render->programs[program_slot] = glCreateProgram();
 }
 
-int main(void)
+void attach_shader_to_prog(Context *render, size_t program_slot, 
+						   const char *shder_src_file, unsigned int stype)
+{	
+	if (program_slot >= PROGRAM_COUNT)
+		return;
+
+	char *source = parse_code_to_cstr(shder_src_file);
+	if (!source)
+		return;
+
+	unsigned int shader_id;
+	shader_id = compile_shader(stype, source);
+
+	free(source);
+
+	glAttachShader(render->programs[program_slot], shader_id);
+	glLinkProgram(render->programs[program_slot]); //Obscure maybe read about this function
+	glValidateProgram(render->programs[program_slot]);
+	glDeleteShader(shader_id);
+}
+
+void init_renderer(Context *render)
 {
-    GLFWwindow* window;
-
-    /* Initialize the library */
-    if (!glfwInit()) {
-        fprintf(stderr, "ERROR: Couldn't load glfw3");
-		return -1;
-	}
-
-	/* Set OpenGL version 3 Core*/
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	if (!render->window)
+		return;
 	
-	/* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(WIDTH,
-							  HEIGHT, 
-							  WIN_NAME, 
-							  NULL, 
-							  NULL);
-    if (!window) {
-        glfwTerminate();
-        fprintf(stderr, "ERROR: Couldn't load glfw3");
-		return -1;
-    }
-	
-	int gl_ver_major = glfwGetWindowAttrib(window, GLFW_CONTEXT_VERSION_MAJOR);
-    int gl_ver_minor = glfwGetWindowAttrib(window, GLFW_CONTEXT_VERSION_MINOR);
-    printf("OpenGL %d.%d\n", gl_ver_major, gl_ver_minor);
-
-	/* Allow for input in the window */
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
-
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-
-	/* Allow usage for modern openGL */
-	GLenum error = glewInit();
-
-	if (error != GLEW_OK) {
-		fprintf(stderr, "ERROR: Couldn't load GLEW");
-	}
-
 	/* float a = 0.5f; */
 	/* float l = 0.525f/2; */
 	/* float c = hypotf(a, l); */ 
 
 	float hex_vertices[] = { 
-		/* 0.0f, 0.0f, 0.0f, 0.0f, */
-		/* -l,   a,    0.0f, 0.0f, */
-		/* l ,   a,    0.0f, 0.0f, */
-		/* c ,   0.0f, 0.0f, 0.0f, */
-		/* l ,   -a,   0.0f, 0.0f, */
-		/* -l,   -a,   0.0f, 0.0f, */
-		/* -c,   0.0f, 0.0f, 0.0f, */
-		/* -c,   a,    0.0f, 0.0f, */ 
-		/*  c,   a,    1.0f, 0.0f, */
-		/* -c,   -a,   1.0f, 1.0f, */
-		/*  c,   -a,   0.0f, 1.0f */   
+		/* 0.0f, 0.0f,  */
+		/* -l,   a,     */
+		/* l ,   a,     */
+		/* c ,   0.0f,  */
+		/* l ,   -a,    */
+		/* -l,   -a,    */
+		/* -c,   0.0f,  */
 		-0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // Top-left 
 		 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // Top-right 
 		 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right	
@@ -198,14 +167,12 @@ int main(void)
 	/* glEnable(GL_BLEND); */
 
 	/* Generate Vertex Array Object*/
-	unsigned int vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	glGenVertexArrays(1, &render->vao);
+	glBindVertexArray(render->vao);
 
-	/* Generate vertex buffer data*/
-	unsigned int buffer; 
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	/* Generate vertex buffer data*/ 
+	glGenBuffers(1, &render->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, render->vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*5, hex_vertices, GL_STATIC_DRAW);
 
 	/* Necesitas "activar" los pointers para cada atributo*/ 
@@ -228,68 +195,105 @@ int main(void)
 						  0);
 		
 	/* Specify Vertex Buffer Data Layout */
-	unsigned int ibo; 
-	glGenBuffers(1, &ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	glGenBuffers(1, &render->ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render->ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*3*2, indexes, GL_STATIC_DRAW);
+}
 
-	unsigned int shader;
-	shader = create_shader(vertex_source, fragment_source);
-	glUseProgram(shader);
+void delete_programs(Context *render) 
+{
+	for (size_t i = 0; i < PROGRAM_COUNT; i++)
+		glDeleteProgram(render->programs[i]);
+}
 
-	GLint u_col;
-	u_col = glGetUniformLocation(shader, "u_color");
+int main(void)
+{
+	Context render;
+
+    /* Initialize the library */
+    if (!glfwInit()) {
+        fprintf(stderr, "ERROR: Couldn't load glfw3");
+		return -1;
+	}
+
+	/* Set OpenGL version 3 Core*/
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	
+	/* Create a windowed mode window and its OpenGL context */
+    render.window = glfwCreateWindow(WIDTH,
+									 HEIGHT, 
+									 WIN_NAME, 
+									 NULL, 
+									 NULL);
+    if (!render.window) {
+        glfwTerminate();
+        fprintf(stderr, "ERROR: Couldn't load glfw3");
+		return -1;
+    }
+	
+	int gl_ver_major = glfwGetWindowAttrib(render.window, GLFW_CONTEXT_VERSION_MAJOR);
+    int gl_ver_minor = glfwGetWindowAttrib(render.window, GLFW_CONTEXT_VERSION_MINOR);
+    printf("OpenGL %d.%d\n", gl_ver_major, gl_ver_minor);
+
+	/* Allow for input in the render.window */
+	glfwSetInputMode(render.window, GLFW_STICKY_KEYS, GLFW_TRUE);
+
+    /* Make the render.window's context current */
+    glfwMakeContextCurrent(render.window);
+
+	/* Allow usage for modern openGL */
+	GLenum error = glewInit();
+
+	if (error != GLEW_OK) {
+		fprintf(stderr, "ERROR: Couldn't load GLEW");
+	}
+
+	init_renderer(&render);
+
+	init_program(&render, 0);
+	attach_shader_to_prog(&render, 0, vertex_source, GL_VERTEX_SHADER);
+	attach_shader_to_prog(&render, 0, fragment_source, GL_FRAGMENT_SHADER);
+
+	/* GLint u_col; */
+	/* u_col = glGetUniformLocation(shader, "u_color"); */
 	
 	glBindVertexArray(0);
 	glUseProgram(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	/* float dt = 0.2f; */ 
 
-	/* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
+	/* Loop until the user closes the render.window */
+    while (!glfwWindowShouldClose(render.window))
     {	 
 		/* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 	
-		glBindVertexArray(vao);
+		glBindVertexArray(render.vao);
 			
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.ibo);
 
-		glUseProgram(shader);
-		/* dt += 0.02f; */
-		/* glUniform4f(u_col, */ 	
-		/* 			fabsf(cosf(dt)), */
-		/* 			fabsf(sinf(dt)), */
-		/* 			fabsf(sinf(1/M_PI - dt)), */ 
-		/* 			1.0f); */
-		/* glUniform4f(u_col, */ 	
-		/* 			1.0f, */
-		/* 			1.0f, */
-		/* 			1.0f, */ 
-		/* 			1.0f); */
-
-		/* glActiveTexture(GL_TEXTURE0); */
-		/* glBindTexture(GL_TEXTURE_2D, 0); */
+		glUseProgram(render.programs[0]);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
-		switch(glfwGetKey(window, GLFW_KEY_Q)) { 
+		switch(glfwGetKey(render.window, GLFW_KEY_Q)) { 
 			case GLFW_PRESS:
-				glfwSetWindowShouldClose(window, GLFW_TRUE);	
+				glfwSetWindowShouldClose(render.window, GLFW_TRUE);	
 				break;
 			default:
 				break;
 		}
  
 		/* Swap front and back buffers */
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(render.window);
 
         /* Poll for and process events */
         glfwPollEvents();
     }
 
-	glDeleteProgram(shader);
+	delete_programs(&render);
 
     glfwTerminate();
     return 0;

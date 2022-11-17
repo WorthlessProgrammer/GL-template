@@ -15,27 +15,6 @@
 
 #define WIN_NAME "Shader - Fractal"
 
-#define ASSERT(x) if (!(x)) exit(1);
-#define GLCall(x) GLClearError();\
-	x;\
-	ASSERT(GLLogCall());
-
-void GLClearError()
-{
-	while (glGetError() != GL_NO_ERROR) printf("1\n");
-}
-
-bool GLLogCall()
-{
-	GLenum error;
-	while ((error = glGetError()))
-	{
-		fprintf(stderr, "[GL ERROR]: (%u) \n", error);
-		return false;
-	}
-	return true;
-}
-
 const char* vertex_source = "./shaders/vertex.shader"; 
 const char* fragment_source = "./shaders/fragment.shader"; 
 

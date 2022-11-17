@@ -206,6 +206,14 @@ void delete_programs(Context *render)
 		glDeleteProgram(render->programs[i]);
 }
 
+void unbind_all()
+{
+	glBindVertexArray(0);
+	glUseProgram(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
 int main(void)
 {
 	Context render;
@@ -259,10 +267,7 @@ int main(void)
 	/* GLint u_col; */
 	/* u_col = glGetUniformLocation(shader, "u_color"); */
 	
-	glBindVertexArray(0);
-	glUseProgram(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	unbind_all();
 
 	/* Loop until the user closes the render.window */
     while (!glfwWindowShouldClose(render.window))

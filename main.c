@@ -106,7 +106,7 @@ void init_program(Context *render, size_t program_slot)
 }
 
 void attach_shader_to_prog(Context *render, size_t program_slot, 
-						   const char *shder_src_file, unsigned int stype)
+			   const char *shder_src_file, unsigned int stype)
 {	
 	if (program_slot >= PROGRAM_COUNT)
 		return;
@@ -181,18 +181,18 @@ void init_renderer(Context *render)
 
 	/* Bind VAO and Vertex Buffer */
 	glVertexAttribPointer(0, 
-						  2, 
-						  GL_FLOAT, 
-						  GL_FALSE, 
-						  sizeof(float)*5, 
-						  0);
+			      2, 
+			      GL_FLOAT, 
+			      GL_FALSE, 
+			      sizeof(float)*5, 
+			      0);
 
 	glVertexAttribPointer(1, 
-						  3, 
-						  GL_FLOAT, 
-						  GL_FALSE, 
-						  sizeof(float)*5, 
-						  0);
+			      3, 
+			      GL_FLOAT, 
+			      GL_FALSE, 
+			      sizeof(float)*5, 
+			      0);
 		
 	/* Specify Vertex Buffer Data Layout */
 	glGenBuffers(1, &render->ibo);
@@ -217,39 +217,39 @@ void unbind_all()
 int main(void)
 {
 	Context render;
-
-    /* Initialize the library */
-    if (!glfwInit()) {
-        fprintf(stderr, "ERROR: Couldn't load glfw3");
+	
+	/* Initialize the library */
+    	if (!glfwInit()) {
+        	fprintf(stderr, "ERROR: Couldn't load glfw3");
 		return -1;
 	}
 
 	/* Set OpenGL version 3 Core*/
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	
 	/* Create a windowed mode window and its OpenGL context */
-    render.window = glfwCreateWindow(WIDTH,
-									 HEIGHT, 
-									 WIN_NAME, 
-									 NULL, 
-									 NULL);
-    if (!render.window) {
-        glfwTerminate();
-        fprintf(stderr, "ERROR: Couldn't load glfw3");
+    	render.window = glfwCreateWindow(WIDTH,
+					 HEIGHT, 
+					 WIN_NAME, 
+					 NULL, 
+					 NULL);
+    	if (!render.window) {
+        	glfwTerminate();
+        	fprintf(stderr, "ERROR: Couldn't load glfw3");
 		return -1;
-    }
+    	}
 	
 	int gl_ver_major = glfwGetWindowAttrib(render.window, GLFW_CONTEXT_VERSION_MAJOR);
-    int gl_ver_minor = glfwGetWindowAttrib(render.window, GLFW_CONTEXT_VERSION_MINOR);
-    printf("OpenGL %d.%d\n", gl_ver_major, gl_ver_minor);
+    	int gl_ver_minor = glfwGetWindowAttrib(render.window, GLFW_CONTEXT_VERSION_MINOR);
+    	printf("OpenGL %d.%d\n", gl_ver_major, gl_ver_minor);
 
 	/* Allow for input in the render.window */
 	glfwSetInputMode(render.window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-    /* Make the render.window's context current */
-    glfwMakeContextCurrent(render.window);
+    	/* Make the render.window's context current */
+    	glfwMakeContextCurrent(render.window);
 
 	/* Allow usage for modern openGL */
 	GLenum error = glewInit();
@@ -270,10 +270,10 @@ int main(void)
 	unbind_all();
 
 	/* Loop until the user closes the render.window */
-    while (!glfwWindowShouldClose(render.window))
-    {	 
+ 	while (!glfwWindowShouldClose(render.window))
+    	{	 
 		/* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        	glClear(GL_COLOR_BUFFER_BIT);
 	
 		glBindVertexArray(render.vao);
 			
@@ -292,14 +292,14 @@ int main(void)
 		}
  
 		/* Swap front and back buffers */
-        glfwSwapBuffers(render.window);
+        	glfwSwapBuffers(render.window);
 
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
+        	/* Poll for and process events */
+        	glfwPollEvents();
+    	}
 
 	delete_programs(&render);
 
-    glfwTerminate();
-    return 0;
+ 	glfwTerminate();
+	return 0;
 }

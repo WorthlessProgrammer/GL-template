@@ -25,6 +25,7 @@ typedef struct {
 	unsigned int vao;
 	unsigned int vbo;
 	unsigned int ibo;
+	unsigned int texture;
 	unsigned int programs[PROGRAM_COUNT];
 } Context;
 
@@ -143,10 +144,10 @@ void init_renderer(Context *render)
 		/* l ,   -a,    */
 		/* -l,   -a,    */
 		/* -c,   0.0f,  */
-		-0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // Top-left 
-		 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // Top-right 
-		 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right	
-		-0.5f, -0.5f, 1.0f, 1.0f, 1.0f  // Bottom-left
+		-0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Top-left 
+		 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, // Top-right 
+		 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // Bottom-right	
+		-0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f   // Bottom-left
 	};
 
 	unsigned int indexes[] = {
@@ -173,31 +174,69 @@ void init_renderer(Context *render)
 	/* Generate vertex buffer data*/ 
 	glGenBuffers(1, &render->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, render->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*5, hex_vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*7, hex_vertices, GL_STATIC_DRAW);
 
 	/* Necesitas "activar" los pointers para cada atributo*/ 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 
 	/* Bind VAO and Vertex Buffer */
 	glVertexAttribPointer(0, 
 			      2, 
 			      GL_FLOAT, 
 			      GL_FALSE, 
-			      sizeof(float)*5, 
+			      sizeof(float)*7, 
 			      0);
 
 	glVertexAttribPointer(1, 
 			      3, 
 			      GL_FLOAT, 
 			      GL_FALSE, 
-			      sizeof(float)*5, 
-			      0);
-		
+			      sizeof(float)*7, 
+			      (void *) (2 * sizeof(float)));
+
+	glVertexAttribPointer(2,
+				  2,
+				  GL_FLOAT,
+				  GL_FALSE,
+				  sizeof(float)*7,
+				  (void *) (5 * sizeof(float)));
+
 	/* Specify Vertex Buffer Data Layout */
 	glGenBuffers(1, &render->ibo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render->ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*3*2, indexes, GL_STATIC_DRAW);
+}
+
+void get_texture(const char* file_path, unsigned int* tex_id)
+{
+
+	int x, y, n;
+	unsigned char *img = stbi_load(file_path, &x, &y, &n, 4);
+
+	if (!img) {
+		fprintf(stderr, "ERROR: Couldn't read file <%s>", file_path);
+		return;
+	} else {
+		printf("img read => %d x %d, %d\n", x, y, n);
+	}
+
+	glGenTextures(1, tex_id);	
+	glBindTexture(GL_TEXTURE_2D, *tex_id);  
+	glBindTextureUnit(GL_TEXTURE_2D, GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA8, GL_UNSIGNED_BYTE, img);
+	/* glGenerateMipmap(GL_TEXTURE_2D); */
+
+	STBI_FREE(img);
 }
 
 void delete_programs(Context *render) 
@@ -212,6 +251,7 @@ void unbind_all()
 	glUseProgram(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 int main(void)
@@ -259,6 +299,7 @@ int main(void)
 	}
 
 	init_renderer(&render);
+	get_texture("C_Logo.png", &render.texture);
 
 	init_program(&render, 0);
 	attach_shader_to_prog(&render, 0, vertex_source, GL_VERTEX_SHADER);
@@ -269,14 +310,15 @@ int main(void)
 	
 	unbind_all();
 
+	glBindTexture(GL_TEXTURE_2D, render.texture);
+
 	/* Loop until the user closes the render.window */
- 	while (!glfwWindowShouldClose(render.window))
-    	{	 
-		/* Render here */
-        	glClear(GL_COLOR_BUFFER_BIT);
+ 	while (!glfwWindowShouldClose(render.window)) {	 
+
+		glClear(GL_COLOR_BUFFER_BIT);
 	
 		glBindVertexArray(render.vao);
-			
+		
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.ibo);
 
 		glUseProgram(render.programs[0]);
@@ -292,11 +334,11 @@ int main(void)
 		}
  
 		/* Swap front and back buffers */
-        	glfwSwapBuffers(render.window);
+        glfwSwapBuffers(render.window);
 
-        	/* Poll for and process events */
-        	glfwPollEvents();
-    	}
+        /* Poll for and process events */
+        glfwPollEvents();
+    }
 
 	delete_programs(&render);
 

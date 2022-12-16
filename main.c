@@ -221,11 +221,9 @@ void get_texture(const char* file_path, unsigned int* tex_id)
 	} else {
 		printf("img read => %d x %d, %d\n", x, y, n);
 	}
-
+	
 	glGenTextures(1, tex_id);	
 	glBindTexture(GL_TEXTURE_2D, *tex_id);  
-	glBindTextureUnit(GL_TEXTURE_2D, GL_TEXTURE0);
-	glActiveTexture(GL_TEXTURE0);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
@@ -233,7 +231,7 @@ void get_texture(const char* file_path, unsigned int* tex_id)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA8, GL_UNSIGNED_BYTE, img);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
 	/* glGenerateMipmap(GL_TEXTURE_2D); */
 
 	STBI_FREE(img);
@@ -299,7 +297,7 @@ int main(void)
 	}
 
 	init_renderer(&render);
-	get_texture("C_Logo.png", &render.texture);
+	get_texture("C_Logo.jpg", &render.texture);
 
 	init_program(&render, 0);
 	attach_shader_to_prog(&render, 0, vertex_source, GL_VERTEX_SHADER);

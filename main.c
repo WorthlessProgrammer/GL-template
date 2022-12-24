@@ -223,13 +223,13 @@ void get_texture(const char* file_path, unsigned int* tex_id)
 	}
 	
 	glGenTextures(1, tex_id);	
-	glBindTexture(GL_TEXTURE_2D, *tex_id);  
+	glBindTexture(GL_TEXTURE_2D, *tex_id);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
 	/* glGenerateMipmap(GL_TEXTURE_2D); */
@@ -307,7 +307,7 @@ int main(void)
 	/* u_col = glGetUniformLocation(shader, "u_color"); */
 	
 	unbind_all();
-
+	
 	glBindTexture(GL_TEXTURE_2D, render.texture);
 
 	/* Loop until the user closes the render.window */

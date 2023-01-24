@@ -232,7 +232,6 @@ void get_texture(const char* file_path, unsigned int* tex_id)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
-	/* glGenerateMipmap(GL_TEXTURE_2D); */
 
 	STBI_FREE(img);
 }

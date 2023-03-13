@@ -213,7 +213,7 @@ void get_texture(const char* file_path, unsigned int* tex_id)
 {
 
 	int x, y, n;
-	unsigned char *img = stbi_load(file_path, &x, &y, &n, 4);
+	unsigned char *img = stbi_load(file_path, &x, &y, &n, 3);
 
 	if (!img) {
 		fprintf(stderr, "ERROR: Couldn't read file <%s>", file_path);
@@ -231,7 +231,7 @@ void get_texture(const char* file_path, unsigned int* tex_id)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
 
 	STBI_FREE(img);
 }
